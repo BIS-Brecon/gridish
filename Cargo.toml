@@ -5,6 +5,7 @@ edition = "2021"
 description = "Library for working with British and Irish national grid strings."
 authors = ["Berwyn Powell"]
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/BIS-Brecon/gridish"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
