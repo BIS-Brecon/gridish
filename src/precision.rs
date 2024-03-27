@@ -13,6 +13,12 @@ pub enum Precision {
 
 impl Precision {
     /// Returns the Precision in metres
+    /// 
+    /// # Example
+    /// ```
+    /// # use gridish::Precision;
+    /// assert_eq!(Precision::_1Km.metres(), 1_000);
+    /// ```
     pub fn metres(&self) -> u32 {
         match self {
             Precision::_100Km => _100KM,
@@ -26,6 +32,12 @@ impl Precision {
 
     /// Returns the number of digits needed to represent
     /// a grid reference with this precision
+    /// 
+    /// # Example
+    /// ```
+    /// # use gridish::Precision;
+    /// assert_eq!(Precision::_100M.digits(), 6);
+    /// ```
     pub fn digits(&self) -> usize {
         match self {
             Precision::_100Km => 0,

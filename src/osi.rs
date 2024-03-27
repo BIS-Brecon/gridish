@@ -17,7 +17,10 @@ pub struct OSI {
 
 impl OSI {
     /// Creates a new grid reference from the given coordinates
-    /// and precision. Returns an error if it is out of bounds.
+    /// and precision.
+    /// 
+    /// # Errors
+    /// Returns an error if the given coordinates are out of bounds.
     ///
     /// # Example
     /// ```
