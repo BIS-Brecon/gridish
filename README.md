@@ -1,5 +1,7 @@
 # gridish
 
+[![CI Pipeline Status](https://github.com/BIS-Brecon/gridish/actions/workflows/rust.yml/badge.svg)](https://github.com/BIS-Brecon/gridish/actions/workflows/rust.yml)
+
 A rust library for working with British and Irish national grids (OSGB, and OSI). Provides a simple interface for converting valid grid references into eastings / northings and vice versa, as well as functionality to recalculate a grid reference to a new precision. This crate intentionally does not provide functionality to convert between different coordinate systems, as there are already several libraries available to do this; it exists solely to fill the gap between numerical coordinates in eastings / northings and their textual representations.
 
 ## Examples
