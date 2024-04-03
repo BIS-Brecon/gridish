@@ -1,3 +1,4 @@
+use crate::utils::trim_string;
 use crate::{coordinates::point::Point as GridPoint, Error, Precision};
 use geo_types::{LineString, Point, Polygon};
 use std::fmt::Display;
@@ -18,7 +19,7 @@ pub struct OSI {
 impl OSI {
     /// Creates a new grid reference from the given coordinates
     /// and precision.
-    /// 
+    ///
     /// # Errors
     /// Returns an error if the given coordinates are out of bounds.
     ///
@@ -208,11 +209,7 @@ impl FromStr for OSI {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let string: String = s
-            .to_uppercase()
-            .chars()
-            .filter(|c| !c.is_whitespace())
-            .collect();
+        let string: String = trim_string(s);
         let point: GridPoint = string.parse()?;
 
         Ok(Self { point })

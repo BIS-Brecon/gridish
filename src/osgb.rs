@@ -1,5 +1,6 @@
 use crate::constants::_500KM;
 use crate::grid::{coords_to_square, square_to_coords};
+use crate::utils::trim_string;
 use crate::{coordinates::point::Point as GridPoint, Error, Precision};
 use geo_types::{LineString, Point, Polygon};
 use std::fmt::Display;
@@ -27,7 +28,7 @@ pub struct OSGB {
 impl OSGB {
     /// Creates a new grid reference from the given coordinates
     /// and precision.
-    /// 
+    ///
     /// # Errors
     /// Returns an error if the given coordinates are out of bounds.
     ///
@@ -251,11 +252,7 @@ impl FromStr for OSGB {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let string: String = s
-            .to_uppercase()
-            .chars()
-            .filter(|c| !c.is_whitespace())
-            .collect();
+        let string: String = trim_string(s);
 
         match string.chars().next() {
             Some(c) => {

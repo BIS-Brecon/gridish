@@ -48,9 +48,22 @@ pub fn digits(s: &str) -> Result<(u32, u32, Precision), Error> {
     ))
 }
 
+/// Removes all non-alphanumeric characters from string
+/// and converts to uppercase for parsing.
+pub fn trim_string(s: &str) -> String {
+    s.chars()
+        .filter(|c| !c.is_ascii_whitespace())
+        .map(|c| c.to_ascii_uppercase())
+        .collect()
+}
+
 #[cfg(test)]
 mod test {
-    use crate::{constants::*, utils::digits, Error, Precision};
+    use crate::{
+        constants::*,
+        utils::{digits, trim_string},
+        Error, Precision,
+    };
 
     #[test]
     fn parse_valid_digits() {
@@ -80,5 +93,12 @@ mod test {
                 "ParseIntError { kind: InvalidDigit }".to_string()
             ))
         )
+    }
+
+    #[test]
+    fn trim_strings() {
+        assert_eq!(trim_string("so 14 5"), "SO145");
+        assert_eq!(trim_string("So 222"), "SO222");
+        assert_eq!(trim_string(" @ @ "), "@@");
     }
 }
