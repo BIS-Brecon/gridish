@@ -1,6 +1,6 @@
 [package]
 name = "gridish"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Library for working with British and Irish national grid strings."
 authors = ["Berwyn Powell"]
@@ -13,7 +13,7 @@ repository = "https://github.com/BIS-Brecon/gridish"
 geo-types = "0.7.13"
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.5.1"
 
 [[bench]]
 name = "parsing"
