@@ -11,3 +11,10 @@ repository = "https://github.com/BIS-Brecon/gridish"
 
 [dependencies]
 geo-types = "0.7.13"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "parsing"
+harness = false
