@@ -19,3 +19,7 @@ criterion = "0.5.1"
 [[bench]]
 name = "parsing"
 harness = false
+
+[[bench]]
+name = "printing"
+harness = false

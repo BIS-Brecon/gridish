@@ -97,7 +97,6 @@ impl OSGB {
 
     /// Returns the point at the osgb's
     /// 'South West' corner - its origin.
-    /// Recalculates the grid reference to a new precision.
     ///
     /// # Example
     /// ```
