@@ -5,6 +5,8 @@ use crate::constants::*;
 pub enum Precision {
     _100Km,
     _10Km,
+    #[cfg(feature = "tetrads")]
+    _2Km,
     _1Km,
     _100M,
     _10M,
@@ -13,7 +15,7 @@ pub enum Precision {
 
 impl Precision {
     /// Returns the Precision in metres
-    /// 
+    ///
     /// # Example
     /// ```
     /// # use gridish::Precision;
@@ -23,6 +25,8 @@ impl Precision {
         match self {
             Precision::_100Km => _100KM,
             Precision::_10Km => _10KM,
+            #[cfg(feature = "tetrads")]
+            Precision::_2Km => _2KM,
             Precision::_1Km => _1KM,
             Precision::_100M => _100M,
             Precision::_10M => _10M,
@@ -32,7 +36,7 @@ impl Precision {
 
     /// Returns the number of digits needed to represent
     /// a grid reference with this precision
-    /// 
+    ///
     /// # Example
     /// ```
     /// # use gridish::Precision;
@@ -42,6 +46,8 @@ impl Precision {
         match self {
             Precision::_100Km => 0,
             Precision::_10Km => 2,
+            #[cfg(feature = "tetrads")]
+            Precision::_2Km => 2,
             Precision::_1Km => 4,
             Precision::_100M => 6,
             Precision::_10M => 8,
