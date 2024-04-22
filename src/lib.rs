@@ -19,8 +19,9 @@
 //! ```
 //!
 //! ## Features
-//! Gridish can support tetrad grid references in the [DINTY](https://web.archive.org/web/20110527152140/http://www.kmbrc.org.uk/recording/help/gridrefhelp.php?page=6)
-//! format as commonly used in biological surveys by using the feature flag `tetrads`.
+//! - `serde`: Provides support for (de)serialization using serde.
+//! - `tetrads`: Gridish can support tetrad grid references in the [DINTY](https://web.archive.org/web/20110527152140/http://www.kmbrc.org.uk/recording/help/gridrefhelp.php?page=6)
+//! format as commonly used in biological surveys.
 //!
 //! ```
 //! # #[cfg(feature = "tetrads")]

@@ -66,7 +66,7 @@ impl OSI {
         }
     }
 
-    /// Returns the point at the osgb's
+    /// Returns the point at the OSI's
     /// 'South West' corner - its origin.
     /// Recalculates the grid reference to a new precision.
     ///
@@ -83,7 +83,7 @@ impl OSI {
         Point::new(self.point.eastings().into(), self.point.northings().into())
     }
 
-    /// Returns the point at the osgb's
+    /// Returns the point at the OSI's
     /// 'North West' corner.
     ///
     /// # Example
@@ -102,7 +102,7 @@ impl OSI {
         )
     }
 
-    /// Returns the point at the osgb's
+    /// Returns the point at the OSI's
     /// 'North East' corner.
     ///
     /// # Example
@@ -121,7 +121,7 @@ impl OSI {
         )
     }
 
-    /// Returns the point at the osgb's
+    /// Returns the point at the OSI's
     /// 'South East' corner.
     ///
     /// # Example
@@ -140,7 +140,7 @@ impl OSI {
         )
     }
 
-    /// Returns the point at the osgb's
+    /// Returns the point at the OSI's
     /// centre.
     ///
     /// # Example
@@ -159,7 +159,7 @@ impl OSI {
         )
     }
 
-    /// Returns the osgb's perimeter.
+    /// Returns the OSI's perimeter.
     ///
     /// # Example
     /// ```
@@ -190,7 +190,7 @@ impl OSI {
         )
     }
 
-    /// Returns the osgb's precision.
+    /// Returns the OSI's precision.
     ///
     /// # Example
     /// ```
@@ -244,5 +244,134 @@ mod test {
             osi.perimeter(),
             Polygon::new(LineString::from(vec![sw, nw, ne, se]), vec![])
         )
+    }
+}
+
+#[cfg(feature = "serde")]
+mod serde {
+    use crate::OSI;
+    use serde::{de, ser};
+    use std::fmt;
+
+    impl ser::Serialize for OSI {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            serializer.serialize_str(&self.to_string())
+        }
+    }
+
+    struct OSIVisitor;
+
+    impl<'de> de::Visitor<'de> for OSIVisitor {
+        type Value = OSI;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a formatted grid ref string")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            value.parse().map_err(E::custom)
+        }
+    }
+
+    impl<'de> de::Deserialize<'de> for OSI {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            deserializer.deserialize_str(OSIVisitor)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{grid, Precision, OSI};
+
+        #[derive(Clone)]
+        pub struct TestGrid {
+            pub eastings: u32,
+            pub northings: u32,
+            pub precision: Precision,
+            pub input_string: String,
+            pub output_string: String,
+        }
+
+        impl TestGrid {
+            pub fn new(
+                eastings: u32,
+                northings: u32,
+                precision: Precision,
+                input_string: &str,
+                output_string: &str,
+            ) -> TestGrid {
+                TestGrid {
+                    eastings,
+                    northings,
+                    precision,
+                    input_string: input_string.to_string(),
+                    output_string: output_string.to_string(),
+                }
+            }
+        }
+
+        fn grids() -> [TestGrid; 11] {
+            [
+                TestGrid::new(300_000, 200_000, Precision::_100Km, "O", "O"),
+                TestGrid::new(380_000, 240_000, Precision::_10Km, "O84", "O84"),
+                TestGrid::new(389_000, 243_000, Precision::_1Km, "O8943", "O8943"),
+                TestGrid::new(389_200, 243_700, Precision::_100M, "O892437", "O892437"),
+                TestGrid::new(389_290, 243_760, Precision::_10M, "O89294376", "O89294376"),
+                TestGrid::new(
+                    389_291,
+                    243_762,
+                    Precision::_1M,
+                    "O8929143762",
+                    "O8929143762",
+                ),
+                TestGrid::new(224_000, 168_000, Precision::_1Km, "s 24 68", "S2468"),
+                TestGrid::new(365_000, 120_000, Precision::_1Km, "T6520", "T6520"),
+                TestGrid::new(12_300, 245_600, Precision::_100M, " L123456 ", "L123456"),
+                TestGrid::new(3_400, 443_400, Precision::_100M, "a 0344 34", "A034434"),
+                TestGrid::new(
+                    315_904,
+                    234_671,
+                    Precision::_1M,
+                    "O1590434671",
+                    "O1590434671",
+                ),
+            ]
+        }
+
+        #[test]
+        fn test_serde_serialize() {
+            for grid in grids() {
+                assert_eq!(
+                    serde_json::to_string(
+                        &OSI::new(grid.eastings, grid.northings, grid.precision).unwrap()
+                    )
+                    .unwrap(),
+                    format!("\"{}\"", grid.output_string)
+                );
+            }
+        }
+
+        #[test]
+        fn test_serde_deserialize() {
+            let from_str = serde_json::from_str::<OSI>;
+
+            for grid in grids() {
+                let OSI: OSI = serde_json::from_str(&format!("\"{}\"", grid.input_string)).unwrap();
+
+                assert_eq!(
+                    OSI,
+                    OSI::new(grid.eastings, grid.northings, grid.precision).unwrap()
+                );
+            }
+        }
     }
 }
