@@ -10,10 +10,18 @@ const GRID: [char; 25] = [
     'K', 'A', 'B', 'C', 'D', 'E',
 ];
 
+pub fn square_to_coords(square: &char) -> Result<(usize, usize), Error> {
+    Ok(grid_to_coords(square, &GRID)?)
+}
+
+pub fn coords_to_square(column: usize, row: usize) -> Result<char, Error> {
+    Ok(coords_to_grid(column, row, &GRID)?)
+}
+
 /// Return the coordinates of the given grid square.
 /// This is zero-based and scale agnostic, so H => (1, 3);
-pub fn square_to_coords(square: &char) -> Result<(usize, usize), Error> {
-    let index = GRID
+fn grid_to_coords(square: &char, grid: &[char]) -> Result<(usize, usize), Error> {
+    let index = grid
         .iter()
         .position(|x| x == square)
         .ok_or_else(|| Error::ParseError(format!("{square} is not a valid grid square.")))?;
@@ -26,14 +34,31 @@ pub fn square_to_coords(square: &char) -> Result<(usize, usize), Error> {
 
 /// Returns the grid square of the given coordinates.
 /// This is zero-based and scale agnostic, so (1, 1) => R;
-pub fn coords_to_square(column: usize, row: usize) -> Result<char, Error> {
+fn coords_to_grid(column: usize, row: usize, grid: &[char]) -> Result<char, Error> {
     if column >= GRID_WIDTH || row >= GRID_WIDTH {
         Err(Error::OutOfBounds)
     } else {
         let index = column + (GRID_WIDTH * row);
 
-        Ok(*GRID.get(index).ok_or_else(|| Error::OutOfBounds)?)
+        Ok(*grid.get(index).ok_or_else(|| Error::OutOfBounds)?)
     }
+}
+
+/// The grid used for tetrad coordinates.
+#[cfg(feature = "tetrads")]
+const TETRAD_GRID: [char; 25] = [
+    'A', 'F', 'K', 'Q', 'V', 'B', 'G', 'L', 'R', 'W', 'C', 'H', 'M', 'S', 'X', 'D', 'I', 'N', 'T',
+    'Y', 'E', 'J', 'P', 'U', 'Z',
+];
+
+#[cfg(feature = "tetrads")]
+pub fn tetrad_to_coords(square: &char) -> Result<(usize, usize), Error> {
+    Ok(grid_to_coords(square, &TETRAD_GRID)?)
+}
+
+#[cfg(feature = "tetrads")]
+pub fn coords_to_tetrad(column: usize, row: usize) -> Result<char, Error> {
+    Ok(coords_to_grid(column, row, &TETRAD_GRID)?)
 }
 
 #[cfg(test)]
@@ -110,6 +135,78 @@ mod test {
 
         for coord in coords {
             assert_eq!(coords_to_square(coord.0, coord.1), Err(Error::OutOfBounds));
+        }
+    }
+}
+
+#[cfg(feature = "tetrads")]
+#[cfg(test)]
+mod test_tetrad {
+    use crate::grid::{coords_to_tetrad, tetrad_to_coords};
+    use crate::Error;
+
+    const VALID_TETRADS: [(char, (usize, usize)); 25] = [
+        ('A', (0, 0)),
+        ('B', (0, 1)),
+        ('C', (0, 2)),
+        ('D', (0, 3)),
+        ('E', (0, 4)),
+        ('F', (1, 0)),
+        ('G', (1, 1)),
+        ('H', (1, 2)),
+        ('I', (1, 3)),
+        ('J', (1, 4)),
+        ('K', (2, 0)),
+        ('L', (2, 1)),
+        ('M', (2, 2)),
+        ('N', (2, 3)),
+        ('P', (2, 4)),
+        ('Q', (3, 0)),
+        ('R', (3, 1)),
+        ('S', (3, 2)),
+        ('T', (3, 3)),
+        ('U', (3, 4)),
+        ('V', (4, 0)),
+        ('W', (4, 1)),
+        ('X', (4, 2)),
+        ('Y', (4, 3)),
+        ('Z', (4, 4)),
+    ];
+
+    #[test]
+    fn valid_letters_return_coords_tetrad() {
+        for square in VALID_TETRADS {
+            assert_eq!(tetrad_to_coords(&square.0), Ok(square.1));
+        }
+    }
+
+    #[test]
+    fn invalid_letters_are_rejected_tetrad() {
+        let squares = ['a', 'O', '0', '@'];
+
+        for square in squares {
+            assert_eq!(
+                tetrad_to_coords(&square),
+                Err(Error::ParseError(format!(
+                    "{square} is not a valid grid square."
+                )))
+            );
+        }
+    }
+
+    #[test]
+    fn valid_coords_return_letter_tetrad() {
+        for square in VALID_TETRADS {
+            assert_eq!(coords_to_tetrad(square.1 .0, square.1 .1), Ok(square.0));
+        }
+    }
+
+    #[test]
+    fn invalid_coords_are_rejected_tetrad() {
+        let coords = [(0, 5), (5, 0)];
+
+        for coord in coords {
+            assert_eq!(coords_to_tetrad(coord.0, coord.1), Err(Error::OutOfBounds));
         }
     }
 }

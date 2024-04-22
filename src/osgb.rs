@@ -97,7 +97,6 @@ impl OSGB {
 
     /// Returns the point at the osgb's
     /// 'South West' corner - its origin.
-    /// Recalculates the grid reference to a new precision.
     ///
     /// # Example
     /// ```
@@ -305,5 +304,134 @@ mod test {
             osgb.perimeter(),
             Polygon::new(LineString::from(vec![sw, nw, ne, se]), vec![])
         )
+    }
+}
+
+#[cfg(feature = "serde")]
+mod serde {
+    use crate::OSGB;
+    use serde::{de, ser};
+    use std::fmt;
+
+    impl ser::Serialize for OSGB {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ser::Serializer,
+        {
+            serializer.serialize_str(&self.to_string())
+        }
+    }
+
+    struct OSGBVisitor;
+
+    impl<'de> de::Visitor<'de> for OSGBVisitor {
+        type Value = OSGB;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a formatted grid ref string")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            value.parse().map_err(E::custom)
+        }
+    }
+
+    impl<'de> de::Deserialize<'de> for OSGB {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: de::Deserializer<'de>,
+        {
+            deserializer.deserialize_str(OSGBVisitor)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use crate::{grid, Precision, OSGB};
+
+        #[derive(Clone)]
+        pub struct TestGrid {
+            pub eastings: u32,
+            pub northings: u32,
+            pub precision: Precision,
+            pub input_string: String,
+            pub output_string: String,
+        }
+
+        impl TestGrid {
+            pub fn new(
+                eastings: u32,
+                northings: u32,
+                precision: Precision,
+                input_string: &str,
+                output_string: &str,
+            ) -> TestGrid {
+                TestGrid {
+                    eastings,
+                    northings,
+                    precision,
+                    input_string: input_string.to_string(),
+                    output_string: output_string.to_string(),
+                }
+            }
+        }
+
+        fn grids() -> [TestGrid; 10] {
+            [
+                TestGrid::new(300_000, 200_000, Precision::_100Km, "SO", "SO"),
+                TestGrid::new(380_000, 240_000, Precision::_10Km, "SO84", "SO84"),
+                TestGrid::new(389_000, 243_000, Precision::_1Km, "SO8943", "SO8943"),
+                TestGrid::new(389_200, 243_700, Precision::_100M, "SO892437", "SO892437"),
+                TestGrid::new(
+                    389_290,
+                    243_760,
+                    Precision::_10M,
+                    "SO89294376",
+                    "SO89294376",
+                ),
+                TestGrid::new(
+                    389_291,
+                    243_762,
+                    Precision::_1M,
+                    "SO8929143762",
+                    "SO8929143762",
+                ),
+                TestGrid::new(224_000, 668_000, Precision::_1Km, "ns 24 68", "NS2468"),
+                TestGrid::new(365_000, 620_000, Precision::_1Km, "NT6520", "NT6520"),
+                TestGrid::new(512_300, 245_600, Precision::_100M, " TL123456 ", "TL123456"),
+                TestGrid::new(503_400, 443_400, Precision::_100M, "Ta 0344 34", "TA034434"),
+            ]
+        }
+
+        #[test]
+        fn test_serde_serialize() {
+            for grid in grids() {
+                assert_eq!(
+                    serde_json::to_string(
+                        &OSGB::new(grid.eastings, grid.northings, grid.precision).unwrap()
+                    )
+                    .unwrap(),
+                    format!("\"{}\"", grid.output_string)
+                );
+            }
+        }
+
+        #[test]
+        fn test_serde_deserialize() {
+            let from_str = serde_json::from_str::<OSGB>;
+
+            for grid in grids() {
+                let osgb: OSGB =
+                    serde_json::from_str(&format!("\"{}\"", grid.input_string)).unwrap();
+
+                assert_eq!(
+                    osgb,
+                    OSGB::new(grid.eastings, grid.northings, grid.precision).unwrap()
+                );
+            }
+        }
     }
 }

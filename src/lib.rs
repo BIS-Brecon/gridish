@@ -17,6 +17,25 @@
 //! assert_eq!(gridref_100m.sw(), coord! {x: 389_200, y: 243_700 }.into());
 //! assert_eq!(gridref_10k.sw(), coord! {x: 380_000, y: 240_000 }.into());
 //! ```
+//!
+//! ## Features
+//! - `serde`: Provides support for (de)serialization using serde.
+//! - `tetrads`: Gridish can support tetrad grid references in the [DINTY](https://web.archive.org/web/20110527152140/http://www.kmbrc.org.uk/recording/help/gridrefhelp.php?page=6)
+//! format as commonly used in biological surveys.
+//!
+//! ```
+//! # #[cfg(feature = "tetrads")]
+//! # {
+//! use gridish::{OSGB, Precision};
+//! use geo_types::coord;
+//!
+//! // Parse grid reference from a 6 figure (100m) string.
+//! let gridref_2k: OSGB = "SN24R".parse().unwrap();
+//!
+//! // Get the eastings / northings at the gridref's south west corner
+//! assert_eq!(gridref_2k.sw(), coord! {x: 226_000, y: 242_000 }.into());
+//! # }
+//! ```
 
 mod constants;
 mod coordinates;

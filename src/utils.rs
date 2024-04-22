@@ -35,7 +35,7 @@ pub fn digits(s: &str) -> Result<(u32, u32, Precision), Error> {
         10 => Precision::_1M,
         _ => {
             return Err(Error::InvalidPrecision(format!(
-                "{} is not a valid number of digits",
+                "{} is not a valid number of digits. Supported values: 0, 2, 4, 6, 8, 10.",
                 s.len()
             )))
         }
