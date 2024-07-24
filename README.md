@@ -6,7 +6,7 @@ A rust library for working with British and Irish national grids (OSGB, and OSI)
 
 ## Examples
 
-```
+```rust
 use gridish::{OSGB, Precision};
 use geo_types::coord;
 
@@ -26,7 +26,7 @@ assert_eq!(gridref.sw(), coord! {x: 389_200, y: 243_700 }.into());
 - `serde`: Provides support for (de)serialization using serde.
 - `tetrads`: Provides support for tetrad grid references in the [DINTY](https://web.archive.org/web/20110527152140/http://www.kmbrc.org.uk/recording/help/gridrefhelp.php?page=6)
 format, as commonly used in biological surveys.
-```
+```rust
 use gridish::{OSGB, Precision};
 use geo_types::coord;
 
