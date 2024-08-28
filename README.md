@@ -18,7 +18,7 @@ let gridref_10k = gridref_100m.recalculate(Precision::_10Km);
 assert_eq!("SO84".to_string(), gridref_10k.to_string());
 
 // Get the eastings / northings at the gridref's south west corner
-assert_eq!(gridref.sw(), coord! {x: 389_200, y: 243_700 }.into());
+assert_eq!(gridref.sw(), coord! {x: 389_200.0, y: 243_700.0 }.into());
 ```
 
 ## Features
@@ -30,11 +30,11 @@ format, as commonly used in biological surveys.
 use gridish::{OSGB, Precision};
 use geo_types::coord;
 
-// Parse grid reference from a 6 figure (100m) string.
+// Parse grid reference from a DINTY (2km) string.
 let gridref_2k: OSGB = "SN24R".parse().unwrap();
 
 // Get the eastings / northings at the gridref's south west corner
-assert_eq!(gridref_2k.sw(), coord! {x: 226_000, y: 242_000 }.into());
+assert_eq!(gridref_2k.sw(), coord! {x: 226_000.0, y: 242_000.0 }.into());
 ```
 
 ## License
