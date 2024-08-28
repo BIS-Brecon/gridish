@@ -68,7 +68,6 @@ impl OSI {
 
     /// Returns the point at the OSI's
     /// 'South West' corner - its origin.
-    /// Recalculates the grid reference to a new precision.
     ///
     /// # Example
     /// ```
@@ -77,9 +76,9 @@ impl OSI {
     ///
     /// let gridref: OSI = "O892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.sw(), coord! {x: 389_200, y: 243_700 }.into());
+    /// assert_eq!(gridref.sw(), coord! {x: 389_200.0, y: 243_700.0 }.into());
     /// ```
-    pub fn sw(&self) -> Point<u32> {
+    pub fn sw(&self) -> Point {
         Point::new(self.point.eastings().into(), self.point.northings().into())
     }
 
@@ -93,12 +92,12 @@ impl OSI {
     ///
     /// let gridref: OSI = "O892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.nw(), coord! {x: 389_200, y: 243_800 }.into());
+    /// assert_eq!(gridref.nw(), coord! {x: 389_200.0, y: 243_800.0 }.into());
     /// ```
-    pub fn nw(&self) -> Point<u32> {
+    pub fn nw(&self) -> Point {
         Point::new(
-            self.point.eastings().inner(),
-            self.point.northings().inner() + self.point.precision().metres(),
+            self.point.eastings().inner() as f64,
+            (self.point.northings().inner() + self.point.precision().metres()) as f64,
         )
     }
 
@@ -112,12 +111,12 @@ impl OSI {
     ///
     /// let gridref: OSI = "O892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.ne(), coord! {x: 389_300, y: 243_800 }.into());
+    /// assert_eq!(gridref.ne(), coord! {x: 389_300.0, y: 243_800.0 }.into());
     /// ```
-    pub fn ne(&self) -> Point<u32> {
+    pub fn ne(&self) -> Point {
         Point::new(
-            self.point.eastings().inner() + self.point.precision().metres(),
-            self.point.northings().inner() + self.point.precision().metres(),
+            (self.point.eastings().inner() + self.point.precision().metres()) as f64,
+            (self.point.northings().inner() + self.point.precision().metres()) as f64,
         )
     }
 
@@ -131,12 +130,12 @@ impl OSI {
     ///
     /// let gridref: OSI = "O892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.se(), coord! {x: 389_300, y: 243_700 }.into());
+    /// assert_eq!(gridref.se(), coord! {x: 389_300.0, y: 243_700.0 }.into());
     /// ```
-    pub fn se(&self) -> Point<u32> {
+    pub fn se(&self) -> Point {
         Point::new(
-            self.point.eastings().inner() + self.point.precision().metres(),
-            self.point.northings().inner(),
+            (self.point.eastings().inner() + self.point.precision().metres()) as f64,
+            self.point.northings().inner() as f64,
         )
     }
 
@@ -150,12 +149,12 @@ impl OSI {
     ///
     /// let gridref: OSI = "O892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.centre(), coord! {x: 389_250, y: 243_750 }.into());
+    /// assert_eq!(gridref.centre(), coord! {x: 389_250.0, y: 243_750.0 }.into());
     /// ```
-    pub fn centre(&self) -> Point<u32> {
+    pub fn centre(&self) -> Point {
         Point::new(
-            self.point.eastings().inner() + (self.point.precision().metres() / 2),
-            self.point.northings().inner() + (self.point.precision().metres() / 2),
+            self.point.eastings().inner() as f64 + (self.point.precision().metres() as f64 / 2.0),
+            self.point.northings().inner() as f64 + (self.point.precision().metres() as f64 / 2.0),
         )
     }
 
@@ -173,17 +172,17 @@ impl OSI {
     ///     Polygon::new(
     ///         LineString::from(
     ///             vec![
-    ///                 Point::new(389_200, 243_700),
-    ///                 Point::new(389_200, 243_800),
-    ///                 Point::new(389_300, 243_800),
-    ///                 Point::new(389_300, 243_700)
+    ///                 Point::new(389_200.0, 243_700.0),
+    ///                 Point::new(389_200.0, 243_800.0),
+    ///                 Point::new(389_300.0, 243_800.0),
+    ///                 Point::new(389_300.0, 243_700.0)
     ///             ]
     ///         ),
     ///         vec![]
     ///     )
     /// );
     /// ```
-    pub fn perimeter(&self) -> Polygon<u32> {
+    pub fn perimeter(&self) -> Polygon {
         Polygon::new(
             LineString::from(vec![self.sw(), self.nw(), self.ne(), self.se()]),
             vec![],
@@ -235,11 +234,11 @@ mod test {
         let ne = osi.ne();
         let se = osi.se();
 
-        assert_eq!(sw, Point::new(0, 0));
-        assert_eq!(nw, Point::new(0, 100));
-        assert_eq!(ne, Point::new(100, 100));
-        assert_eq!(se, Point::new(100, 0));
-        assert_eq!(osi.centre(), Point::new(50, 50));
+        assert_eq!(sw, Point::new(0.0, 0.0));
+        assert_eq!(nw, Point::new(0.0, 100.0));
+        assert_eq!(ne, Point::new(100.0, 100.0));
+        assert_eq!(se, Point::new(100.0, 0.0));
+        assert_eq!(osi.centre(), Point::new(50.0, 50.0));
         assert_eq!(
             osi.perimeter(),
             Polygon::new(LineString::from(vec![sw, nw, ne, se]), vec![])

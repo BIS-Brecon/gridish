@@ -8,8 +8,8 @@ fn parses_valid_strings() {
     for item in data {
         let grid: OSGB = item.input_string.parse().unwrap();
 
-        assert_eq!(item.eastings, grid.sw().x());
-        assert_eq!(item.northings, grid.sw().y());
+        assert_eq!(item.eastings, grid.sw().x() as u32);
+        assert_eq!(item.northings, grid.sw().y() as u32);
         assert_eq!(item.precision, grid.precision());
     }
 }

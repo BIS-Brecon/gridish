@@ -52,6 +52,12 @@ impl Into<u32> for Metres {
     }
 }
 
+impl Into<f64> for Metres {
+    fn into(self) -> f64 {
+        f64::from(self.0)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::constants::_500KM;

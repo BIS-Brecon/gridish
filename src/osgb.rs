@@ -105,10 +105,10 @@ impl OSGB {
     ///
     /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.sw(), coord! {x: 389_200, y: 243_700 }.into());
+    /// assert_eq!(gridref.sw(), coord! {x: 389_200.0, y: 243_700.0 }.into());
     /// ```
-    pub fn sw(&self) -> Point<u32> {
-        Point::new(self.eastings(), self.northings())
+    pub fn sw(&self) -> Point {
+        Point::new(self.eastings() as f64, self.northings() as f64)
     }
 
     /// Returns the point at the osgb's
@@ -121,12 +121,12 @@ impl OSGB {
     ///
     /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.nw(), coord! {x: 389_200, y: 243_800 }.into());
+    /// assert_eq!(gridref.nw(), coord! {x: 389_200.0, y: 243_800.0 }.into());
     /// ```
-    pub fn nw(&self) -> Point<u32> {
+    pub fn nw(&self) -> Point {
         Point::new(
-            self.eastings(),
-            self.northings() + self.point.precision().metres(),
+            self.eastings() as f64,
+            (self.northings() + self.point.precision().metres()) as f64,
         )
     }
 
@@ -140,12 +140,12 @@ impl OSGB {
     ///
     /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.ne(), coord! {x: 389_300, y: 243_800 }.into());
+    /// assert_eq!(gridref.ne(), coord! {x: 389_300.0, y: 243_800.0 }.into());
     /// ```
-    pub fn ne(&self) -> Point<u32> {
+    pub fn ne(&self) -> Point {
         Point::new(
-            self.eastings() + self.point.precision().metres(),
-            self.northings() + self.point.precision().metres(),
+            (self.eastings() + self.point.precision().metres()) as f64,
+            (self.northings() + self.point.precision().metres()) as f64,
         )
     }
 
@@ -159,12 +159,12 @@ impl OSGB {
     ///
     /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.se(), coord! {x: 389_300, y: 243_700 }.into());
+    /// assert_eq!(gridref.se(), coord! {x: 389_300.0, y: 243_700.0 }.into());
     /// ```
-    pub fn se(&self) -> Point<u32> {
+    pub fn se(&self) -> Point {
         Point::new(
-            self.eastings() + self.point.precision().metres(),
-            self.northings(),
+            (self.eastings() + self.point.precision().metres()) as f64,
+            self.northings() as f64,
         )
     }
 
@@ -178,12 +178,12 @@ impl OSGB {
     ///
     /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
-    /// assert_eq!(gridref.centre(), coord! {x: 389_250, y: 243_750 }.into());
+    /// assert_eq!(gridref.centre(), coord! {x: 389_250.0, y: 243_750.0 }.into());
     /// ```
-    pub fn centre(&self) -> Point<u32> {
+    pub fn centre(&self) -> Point {
         Point::new(
-            self.eastings() + (self.point.precision().metres() / 2),
-            self.northings() + (self.point.precision().metres() / 2),
+            self.eastings() as f64 + (self.point.precision().metres() as f64 / 2.0),
+            self.northings() as f64 + (self.point.precision().metres() as f64 / 2.0),
         )
     }
 
@@ -201,17 +201,17 @@ impl OSGB {
     ///     Polygon::new(
     ///         LineString::from(
     ///             vec![
-    ///                 Point::new(389_200, 243_700),
-    ///                 Point::new(389_200, 243_800),
-    ///                 Point::new(389_300, 243_800),
-    ///                 Point::new(389_300, 243_700)
+    ///                 Point::new(389_200.0, 243_700.0),
+    ///                 Point::new(389_200.0, 243_800.0),
+    ///                 Point::new(389_300.0, 243_800.0),
+    ///                 Point::new(389_300.0, 243_700.0)
     ///             ]
     ///         ),
     ///         vec![]
     ///     )
     /// );
     /// ```
-    pub fn perimeter(&self) -> Polygon<u32> {
+    pub fn perimeter(&self) -> Polygon {
         Polygon::new(
             LineString::from(vec![self.sw(), self.nw(), self.ne(), self.se()]),
             vec![],
@@ -295,11 +295,11 @@ mod test {
         let ne = osgb.ne();
         let se = osgb.se();
 
-        assert_eq!(sw, Point::new(0, 0));
-        assert_eq!(nw, Point::new(0, 100));
-        assert_eq!(ne, Point::new(100, 100));
-        assert_eq!(se, Point::new(100, 0));
-        assert_eq!(osgb.centre(), Point::new(50, 50));
+        assert_eq!(sw, Point::new(0.0, 0.0));
+        assert_eq!(nw, Point::new(0.0, 100.0));
+        assert_eq!(ne, Point::new(100.0, 100.0));
+        assert_eq!(se, Point::new(100.0, 0.0));
+        assert_eq!(osgb.centre(), Point::new(50.0, 50.0));
         assert_eq!(
             osgb.perimeter(),
             Polygon::new(LineString::from(vec![sw, nw, ne, se]), vec![])

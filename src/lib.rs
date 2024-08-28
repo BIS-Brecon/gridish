@@ -14,8 +14,8 @@
 //! assert_eq!("SO84".to_string(), gridref_10k.to_string());
 //!
 //! // Get the eastings / northings at the gridref's south west corner
-//! assert_eq!(gridref_100m.sw(), coord! {x: 389_200, y: 243_700 }.into());
-//! assert_eq!(gridref_10k.sw(), coord! {x: 380_000, y: 240_000 }.into());
+//! assert_eq!(gridref_100m.sw(), coord! {x: 389_200.0, y: 243_700.0 }.into());
+//! assert_eq!(gridref_10k.sw(), coord! {x: 380_000.0, y: 240_000.0 }.into());
 //! ```
 //!
 //! ## Features
@@ -33,7 +33,7 @@
 //! let gridref_2k: OSGB = "SN24R".parse().unwrap();
 //!
 //! // Get the eastings / northings at the gridref's south west corner
-//! assert_eq!(gridref_2k.sw(), coord! {x: 226_000, y: 242_000 }.into());
+//! assert_eq!(gridref_2k.sw(), coord! {x: 226_000.0, y: 242_000.0 }.into());
 //! # }
 //! ```
 
