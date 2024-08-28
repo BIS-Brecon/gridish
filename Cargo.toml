@@ -1,6 +1,6 @@
 [package]
 name = "gridish"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "Library for working with British and Irish national grid strings."
 authors = ["Berwyn Powell"]
