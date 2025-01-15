@@ -1,13 +1,13 @@
-use crate::{Error, Precision};
+use crate::{error::ParseError, Error, Precision};
 
 /// Converts the digits of a string into
 /// eastings, northings and precision.
 pub fn digits(s: &str) -> Result<(u32, u32, Precision), Error> {
-    // Error is s length is over 10 or not even;
-    if s.len() > 10 || (s.len() % 2) != 0 {
-        return Err(Error::ParseError(format!(
-            "{} is not a valid number of digits. Supported values: 0, 2, 4, 6, 8, 10.",
-            s.len()
+    // Error if s length is over 10 or not even;
+    let length = s.len();
+    if length > 10 || (length % 2) != 0 {
+        return Err(Error::ParseError(ParseError::InvalidPrecision(
+            length as u32,
         )));
     }
 
@@ -15,18 +15,18 @@ pub fn digits(s: &str) -> Result<(u32, u32, Precision), Error> {
         if s.is_empty() {
             (0, 0)
         } else {
-            let (e, n) = s.split_at(s.len() / 2);
+            let (e, n) = s.split_at(length / 2);
 
             (
                 e.parse()
-                    .map_err(|e| Error::ParseError(format!("{:?}", e)))?,
+                    .map_err(|e| Error::ParseError(ParseError::ParseInt(e)))?,
                 n.parse()
-                    .map_err(|e| Error::ParseError(format!("{:?}", e)))?,
+                    .map_err(|e| Error::ParseError(ParseError::ParseInt(e)))?,
             )
         }
     };
 
-    let precision = match s.len() {
+    let precision = match length {
         0 => Precision::_100Km,
         2 => Precision::_10Km,
         4 => Precision::_1Km,
@@ -34,9 +34,8 @@ pub fn digits(s: &str) -> Result<(u32, u32, Precision), Error> {
         8 => Precision::_10M,
         10 => Precision::_1M,
         _ => {
-            return Err(Error::InvalidPrecision(format!(
-                "{} is not a valid number of digits. Supported values: 0, 2, 4, 6, 8, 10.",
-                s.len()
+            return Err(Error::ParseError(ParseError::InvalidPrecision(
+                length as u32,
             )))
         }
     };
@@ -61,6 +60,7 @@ pub fn trim_string(s: &str) -> String {
 mod test {
     use crate::{
         constants::*,
+        error::ParseError,
         utils::{digits, trim_string},
         Error, Precision,
     };
@@ -80,18 +80,15 @@ mod test {
         // Reject wrong length
         assert_eq!(
             digits("123"),
-            Err(Error::ParseError(
-                "3 is not a valid number of digits. Supported values: 0, 2, 4, 6, 8, 10."
-                    .to_string()
-            ))
+            Err(Error::ParseError(ParseError::InvalidPrecision(3)))
         );
 
         // Reject non numbers
         assert_eq!(
-            digits("ab"),
-            Err(Error::ParseError(
-                "ParseIntError { kind: InvalidDigit }".to_string()
-            ))
+            digits("ab")
+                .expect_err("Letters should not be able to be parsed as integers")
+                .to_string(),
+            "invalid digit found in string".to_string()
         )
     }
 

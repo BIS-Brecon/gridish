@@ -46,7 +46,7 @@ mod osi;
 mod precision;
 mod utils;
 
-pub use error::Error;
+pub use error::{Error, ParseError};
 pub use osgb::OSGB;
 pub use osi::OSI;
 pub use precision::Precision;

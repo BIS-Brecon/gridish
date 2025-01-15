@@ -1,4 +1,5 @@
 use crate::constants::_500KM;
+use crate::error::ParseError;
 use crate::grid::{coords_to_square, square_to_coords};
 use crate::utils::trim_string;
 use crate::{coordinates::point::Point as GridPoint, Error, Precision};
@@ -54,9 +55,7 @@ impl OSGB {
 
         // If 500km square is out of range return error
         if !['S', 'T', 'N', 'O', 'H'].contains(&square) {
-            Err(Error::ParseError(format!(
-                "{square} is not a supported 500km square."
-            )))
+            Err(Error::ParseError(ParseError::Invalid500kSquare(square)))
         } else {
             let eastings = (eastings % _500KM).try_into()?;
             let northings = (northings % _500KM).try_into()?;
@@ -264,7 +263,7 @@ impl FromStr for OSGB {
                     point,
                 })
             }
-            None => Err(Error::ParseError("String can not be empty.".to_string())),
+            None => Err(Error::ParseError(ParseError::EmptyString)),
         }
     }
 }

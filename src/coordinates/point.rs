@@ -1,5 +1,6 @@
 use crate::constants::*;
 use crate::coordinates::metres::Metres;
+use crate::error::ParseError;
 use crate::grid::{coords_to_square, square_to_coords};
 use crate::{utils, Error, Precision};
 use std::fmt::Display;
@@ -86,7 +87,7 @@ impl FromStr for Point {
                     precision,
                 })
             }
-            None => Err(Error::ParseError("String can not be empty.".to_string())),
+            None => Err(Error::ParseError(ParseError::EmptyString)),
         }
     }
 }

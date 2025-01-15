@@ -1,5 +1,5 @@
 use crate::data::osi_grids;
-use gridish::{Error, OSI};
+use gridish::{Error, ParseError, OSI};
 
 #[test]
 fn parses_valid_strings() {
@@ -18,16 +18,12 @@ fn parses_valid_strings() {
 fn rejects_invalid_strings() {
     assert_eq!(
         "L123".parse::<OSI>(),
-        Err(Error::ParseError(
-            "3 is not a valid number of digits. Supported values: 0, 2, 4, 6, 8, 10.".to_string()
-        ))
+        Err(Error::ParseError(ParseError::InvalidPrecision(3)))
     );
 
     assert_eq!(
         "123".parse::<OSI>(),
-        Err(Error::ParseError(
-            "1 is not a valid grid square.".to_string()
-        ))
+        Err(Error::ParseError(ParseError::InvalidSquare('1')))
     );
 }
 

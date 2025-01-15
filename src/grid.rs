@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::{error::ParseError, Error};
 
 /// A 5x5 grid made up of letters.
 /// Used in grid references to break up
@@ -24,7 +24,7 @@ fn grid_to_coords(square: &char, grid: &[char]) -> Result<(usize, usize), Error>
     let index = grid
         .iter()
         .position(|x| x == square)
-        .ok_or_else(|| Error::ParseError(format!("{square} is not a valid grid square.")))?;
+        .ok_or_else(|| Error::ParseError(ParseError::InvalidSquare(*square)))?;
 
     let column = index % GRID_WIDTH;
     let row = index / GRID_WIDTH;
@@ -64,6 +64,7 @@ pub fn coords_to_tetrad(column: usize, row: usize) -> Result<char, Error> {
 #[cfg(test)]
 mod test {
     use crate::{
+        error::ParseError,
         grid::{coords_to_square, square_to_coords, GRID, GRID_WIDTH},
         Error,
     };
@@ -115,9 +116,7 @@ mod test {
         for square in squares {
             assert_eq!(
                 square_to_coords(&square),
-                Err(Error::ParseError(format!(
-                    "{square} is not a valid grid square."
-                )))
+                Err(Error::ParseError(ParseError::InvalidSquare(square)))
             );
         }
     }
@@ -143,7 +142,7 @@ mod test {
 #[cfg(test)]
 mod test_tetrad {
     use crate::grid::{coords_to_tetrad, tetrad_to_coords};
-    use crate::Error;
+    use crate::{Error, ParseError};
 
     const VALID_TETRADS: [(char, (usize, usize)); 25] = [
         ('A', (0, 0)),
@@ -187,9 +186,7 @@ mod test_tetrad {
         for square in squares {
             assert_eq!(
                 tetrad_to_coords(&square),
-                Err(Error::ParseError(format!(
-                    "{square} is not a valid grid square."
-                )))
+                Err(Error::ParseError(ParseError::InvalidSquare(square)))
             );
         }
     }
