@@ -23,7 +23,7 @@ pub fn coords_to_square(column: usize, row: usize) -> Result<char, Error> {
 fn grid_to_coords(square: &char, grid: &[char]) -> Result<(usize, usize), Error> {
     let index = grid
         .iter()
-        .position(|x| x == square)
+        .position(|x| x.eq_ignore_ascii_case(square))
         .ok_or_else(|| Error::ParseError(ParseError::InvalidSquare(*square)))?;
 
     let column = index % GRID_WIDTH;
@@ -111,7 +111,7 @@ mod test {
 
     #[test]
     fn invalid_letters_are_rejected() {
-        let squares = ['a', 'I', '0', '@'];
+        let squares = ['I', '0', '@'];
 
         for square in squares {
             assert_eq!(
@@ -181,7 +181,7 @@ mod test_tetrad {
 
     #[test]
     fn invalid_letters_are_rejected_tetrad() {
-        let squares = ['a', 'O', '0', '@'];
+        let squares = ['O', '0', '@'];
 
         for square in squares {
             assert_eq!(

@@ -1,4 +1,3 @@
-use crate::utils::trim_string;
 use crate::{coordinates::point::Point as GridPoint, Error, Precision};
 use geo_types::{LineString, Point, Polygon};
 use std::fmt::Display;
@@ -208,8 +207,7 @@ impl FromStr for OSI {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let string: String = trim_string(s);
-        let point: GridPoint = string.parse()?;
+        let point: GridPoint = s.trim().parse()?;
 
         Ok(Self { point })
     }
@@ -332,10 +330,10 @@ mod serde {
                     "O8929143762",
                     "O8929143762",
                 ),
-                TestGrid::new(224_000, 168_000, Precision::_1Km, "s 24 68", "S2468"),
+                TestGrid::new(224_000, 168_000, Precision::_1Km, "s2468 ", "S2468"),
                 TestGrid::new(365_000, 120_000, Precision::_1Km, "T6520", "T6520"),
                 TestGrid::new(12_300, 245_600, Precision::_100M, " L123456 ", "L123456"),
-                TestGrid::new(3_400, 443_400, Precision::_100M, "a 0344 34", "A034434"),
+                TestGrid::new(3_400, 443_400, Precision::_100M, " a034434", "A034434"),
                 TestGrid::new(
                     315_904,
                     234_671,

@@ -1,7 +1,6 @@
 use crate::constants::_500KM;
 use crate::error::ParseError;
 use crate::grid::{coords_to_square, square_to_coords};
-use crate::utils::trim_string;
 use crate::{coordinates::point::Point as GridPoint, Error, Precision};
 use geo_types::{LineString, Point, Polygon};
 use std::fmt::Display;
@@ -250,12 +249,11 @@ impl FromStr for OSGB {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let string: String = trim_string(s);
-
-        match string.chars().next() {
+        let s = s.trim();
+        match s.chars().next() {
             Some(c) => {
                 let (east, north) = square_to_coords(&c)?;
-                let point: GridPoint = string[1..string.len()].parse()?;
+                let point: GridPoint = s[1..].parse()?;
 
                 Ok(Self {
                     square_500k_east: east as u32,
@@ -398,10 +396,10 @@ mod serde {
                     "SO8929143762",
                     "SO8929143762",
                 ),
-                TestGrid::new(224_000, 668_000, Precision::_1Km, "ns 24 68", "NS2468"),
+                TestGrid::new(224_000, 668_000, Precision::_1Km, "ns2468 ", "NS2468"),
                 TestGrid::new(365_000, 620_000, Precision::_1Km, "NT6520", "NT6520"),
                 TestGrid::new(512_300, 245_600, Precision::_100M, " TL123456 ", "TL123456"),
-                TestGrid::new(503_400, 443_400, Precision::_100M, "Ta 0344 34", "TA034434"),
+                TestGrid::new(503_400, 443_400, Precision::_100M, " Ta034434", "TA034434"),
             ]
         }
 

@@ -47,10 +47,10 @@ pub fn osgb_grids() -> Vec<TestGrid> {
             "SO8929143762",
             "SO8929143762",
         ),
-        TestGrid::new(224_000, 668_000, Precision::_1Km, "ns 24 68", "NS2468"),
+        TestGrid::new(224_000, 668_000, Precision::_1Km, "ns2468 ", "NS2468"),
         TestGrid::new(365_000, 620_000, Precision::_1Km, "NT6520", "NT6520"),
         TestGrid::new(512_300, 245_600, Precision::_100M, " TL123456 ", "TL123456"),
-        TestGrid::new(503_400, 443_400, Precision::_100M, "Ta 0344 34", "TA034434"),
+        TestGrid::new(503_400, 443_400, Precision::_100M, " Ta034434", "TA034434"),
     ]
     .to_vec()
 }
@@ -69,10 +69,10 @@ pub fn osi_grids() -> Vec<TestGrid> {
             "O8929143762",
             "O8929143762",
         ),
-        TestGrid::new(224_000, 168_000, Precision::_1Km, "s 24 68", "S2468"),
+        TestGrid::new(224_000, 168_000, Precision::_1Km, "s2468 ", "S2468"),
         TestGrid::new(365_000, 120_000, Precision::_1Km, "T6520", "T6520"),
         TestGrid::new(12_300, 245_600, Precision::_100M, " L123456 ", "L123456"),
-        TestGrid::new(3_400, 443_400, Precision::_100M, "a 0344 34", "A034434"),
+        TestGrid::new(3_400, 443_400, Precision::_100M, " a034434", "A034434"),
         TestGrid::new(
             315_904,
             234_671,
