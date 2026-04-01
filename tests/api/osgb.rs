@@ -1,5 +1,5 @@
 use crate::data::osgb_grids;
-use gridish::{Error, OSGB};
+use gridish::{OSGB, ParseError};
 
 #[test]
 fn parses_valid_strings() {
@@ -8,34 +8,19 @@ fn parses_valid_strings() {
     for item in data {
         let grid: OSGB = item.input_string.parse().unwrap();
 
-        assert_eq!(item.eastings, grid.sw().x() as u32);
-        assert_eq!(item.northings, grid.sw().y() as u32);
-        assert_eq!(item.precision, grid.precision());
+        assert_eq!(item.eastings, grid.south_west().x() as u32);
+        assert_eq!(item.northings, grid.south_west().y() as u32);
+        assert_eq!(item.resolution, grid.resolution());
     }
 }
 
 #[test]
 fn rejects_invalid_strings() {
-    assert_eq!(
-        "TL123".parse::<OSGB>(),
-        Err(Error::ParseError(
-            "3 is not a valid number of digits. Supported values: 0, 2, 4, 6, 8, 10.".to_string()
-        ))
-    );
+    assert_eq!("TL123".parse::<OSGB>(), Err(ParseError::InvalidResolution));
 
-    assert_eq!(
-        "123".parse::<OSGB>(),
-        Err(Error::ParseError(
-            "1 is not a valid grid square.".to_string()
-        ))
-    );
+    assert_eq!("123".parse::<OSGB>(), Err(ParseError::InvalidSquare('1')));
 
-    assert_eq!(
-        "T45".parse::<OSGB>(),
-        Err(Error::ParseError(
-            "4 is not a valid grid square.".to_string()
-        ))
-    );
+    assert_eq!("T45".parse::<OSGB>(), Err(ParseError::InvalidSquare('4')));
 }
 
 #[test]
@@ -43,7 +28,7 @@ fn prints_correct_strings() {
     let data = osgb_grids();
 
     for item in data {
-        let grid = OSGB::new(item.eastings, item.northings, item.precision).unwrap();
+        let grid = OSGB::new(item.eastings, item.northings, item.resolution).unwrap();
 
         assert_eq!(item.output_string, grid.to_string());
     }

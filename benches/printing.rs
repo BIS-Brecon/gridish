@@ -1,18 +1,17 @@
-use criterion::criterion_group;
-use criterion::criterion_main;
 use criterion::BenchmarkId;
 use criterion::Criterion;
 use criterion::Throughput;
-use gridish::Precision;
-use gridish::{OSGB, OSI};
+use criterion::criterion_group;
+use criterion::criterion_main;
+use gridish::{OSGB, OSI, Resolution};
 
-const PRECISIONS: [Precision; 6] = [
-    Precision::_100Km,
-    Precision::_10Km,
-    Precision::_1Km,
-    Precision::_100M,
-    Precision::_10M,
-    Precision::_1M,
+const PRECISIONS: [Resolution; 6] = [
+    Resolution::_100km,
+    Resolution::_10km,
+    Resolution::_1km,
+    Resolution::_100m,
+    Resolution::_10m,
+    Resolution::_1m,
 ];
 
 const EASTINGS: u32 = 123_456;
@@ -25,7 +24,7 @@ pub fn to_string_osgb(c: &mut Criterion) {
         group.throughput(Throughput::Elements(1));
 
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{} digits", precision.digits())),
+            BenchmarkId::from_parameter(format!("{} metres", precision.metres())),
             precision,
             |b, &precision| {
                 b.iter(|| {
@@ -47,7 +46,7 @@ pub fn to_string_osi(c: &mut Criterion) {
         group.throughput(Throughput::Elements(1));
 
         group.bench_with_input(
-            BenchmarkId::from_parameter(format!("{} digits", precision.digits())),
+            BenchmarkId::from_parameter(format!("{} digits", precision.metres())),
             precision,
             |b, &precision| {
                 b.iter(|| {
