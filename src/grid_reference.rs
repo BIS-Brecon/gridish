@@ -102,7 +102,6 @@ impl GridReference {
                         (false, false) => "SW",
                     }
                 }
-                #[cfg(feature = "tetrads")]
                 Suffix::Tetrad => &coords_to_grid(
                     (east / self.resolution().metres()) as usize,
                     (north / self.resolution().metres()) as usize,
@@ -136,9 +135,6 @@ impl GridReference {
         // Parse digits if found
         if let Some(end) = s.rfind(|c: char| c.is_numeric()) {
             let digits = &s[pos..=end].trim_start();
-            // Move pos to end of digits for finding suffix
-            pos = end;
-
             let (eastings, northings) = if let Some(s) = digits.split_once(' ') {
                 (s.0, s.1)
             } else {
@@ -157,6 +153,9 @@ impl GridReference {
 
             east += eastings.parse::<u32>()? * res;
             north += northings.parse::<u32>()? * res;
+
+            // Move pos to end of digits for finding suffix
+            pos = end;
         }
 
         // Parse suffix if found
@@ -166,7 +165,6 @@ impl GridReference {
             let suffix = &s[start..s.len()].trim();
 
             // Tetrad
-            #[cfg(feature = "tetrads")]
             if suffix.len() == 1 {
                 if res == _10KM {
                     res = res / 5;
@@ -181,9 +179,7 @@ impl GridReference {
                         "Tetrads are only supported for 2 figure grid references".to_string(),
                     ));
                 }
-            }
-
-            if suffix.len() > 1 {
+            } else {
                 res = res / 2;
                 let (e, n) = match *suffix {
                     "NW" => (0, res),
@@ -205,7 +201,6 @@ impl GridReference {
             _50KM => Resolution::_50km,
             _10KM => Resolution::_10km,
             _5KM => Resolution::_5km,
-            #[cfg(feature = "tetrads")]
             _2KM => Resolution::_2km,
             _1KM => Resolution::_1km,
             _500M => Resolution::_500m,

@@ -331,7 +331,6 @@ mod tests {
             (Resolution::_50km, "TLSW"),
             (Resolution::_10km, "TL03"),
             (Resolution::_5km, "TL03NW"),
-            #[cfg(feature = "tetrads")]
             (Resolution::_2km, "TL03P"),
             (Resolution::_1km, "TL0438"),
             (Resolution::_500m, "TL0438SE"),
@@ -355,7 +354,6 @@ mod tests {
             ("TLSW", (Resolution::_50km, 500000, 200000)),
             ("TL03", (Resolution::_10km, 500000, 230000)),
             ("TL03NW", (Resolution::_5km, 500000, 235000)),
-            #[cfg(feature = "tetrads")]
             ("TL03P", (Resolution::_2km, 504000, 238000)),
             ("TL0438", (Resolution::_1km, 504000, 238000)),
             ("TL0438SE", (Resolution::_500m, 504500, 238000)),
@@ -384,7 +382,6 @@ mod tests {
             (Resolution::_50km, (500000, 200000)),
             (Resolution::_10km, (500000, 230000)),
             (Resolution::_5km, (500000, 235000)),
-            #[cfg(feature = "tetrads")]
             (Resolution::_2km, (504000, 238000)),
             (Resolution::_1km, (504000, 238000)),
             (Resolution::_500m, (504500, 238000)),
@@ -408,7 +405,6 @@ mod tests {
             Resolution::_50km,
             Resolution::_10km,
             Resolution::_5km,
-            #[cfg(feature = "tetrads")]
             Resolution::_2km,
             Resolution::_1km,
             Resolution::_500m,

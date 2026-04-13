@@ -283,7 +283,6 @@ mod tests {
             (Resolution::_50km, "OSW"),
             (Resolution::_10km, "O13"),
             (Resolution::_5km, "O13SE"),
-            #[cfg(feature = "tetrads")]
             (Resolution::_2km, "O13M"),
             (Resolution::_1km, "O1534"),
             (Resolution::_500m, "O1534NE"),
@@ -307,7 +306,6 @@ mod tests {
             ("OSW", (Resolution::_50km, 300000, 200000)),
             ("O13", (Resolution::_10km, 310000, 230000)),
             ("O13SE", (Resolution::_5km, 315000, 230000)),
-            #[cfg(feature = "tetrads")]
             ("O13M", (Resolution::_2km, 314000, 234000)),
             ("O1534", (Resolution::_1km, 315000, 234000)),
             ("O1534NE", (Resolution::_500m, 315500, 234500)),
@@ -336,7 +334,6 @@ mod tests {
             (Resolution::_50km, (300000, 200000)),
             (Resolution::_10km, (310000, 230000)),
             (Resolution::_5km, (315000, 230000)),
-            #[cfg(feature = "tetrads")]
             (Resolution::_2km, (314000, 234000)),
             (Resolution::_1km, (315000, 234000)),
             (Resolution::_500m, (315500, 234500)),
@@ -360,7 +357,6 @@ mod tests {
             Resolution::_50km,
             Resolution::_10km,
             Resolution::_5km,
-            #[cfg(feature = "tetrads")]
             Resolution::_2km,
             Resolution::_1km,
             Resolution::_500m,

@@ -2,12 +2,11 @@ use crate::constants::*;
 
 pub(crate) enum Suffix {
     Quadrant,
-    #[cfg(feature = "tetrads")]
     Tetrad,
 }
 
 /// Supported resolutions for working with Grid References.
-/// Represents the size of the square in metres that a point can fall within.
+/// Represents the size of the square (in metres) that a point can fall within.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Resolution {
     /// 100km Square
@@ -19,7 +18,6 @@ pub enum Resolution {
     /// 5km Square (Quadrant of 10km Square)
     _5km,
     /// 2km Square (Tetrad)
-    #[cfg(feature = "tetrads")]
     _2km,
     /// 1km Square
     _1km,
@@ -51,7 +49,6 @@ impl Resolution {
             Resolution::_50km => _50KM,
             Resolution::_10km => _10KM,
             Resolution::_5km => _5KM,
-            #[cfg(feature = "tetrads")]
             Resolution::_2km => _2KM,
             Resolution::_1km => _1KM,
             Resolution::_500m => _500M,
@@ -70,7 +67,6 @@ impl Resolution {
             Resolution::_50km => (_100KM, 0, Some(Suffix::Quadrant)),
             Resolution::_10km => (_10KM, 2, None),
             Resolution::_5km => (_10KM, 2, Some(Suffix::Quadrant)),
-            #[cfg(feature = "tetrads")]
             Resolution::_2km => (_10KM, 2, Some(Suffix::Tetrad)),
             Resolution::_1km => (_1KM, 4, None),
             Resolution::_500m => (_1KM, 4, Some(Suffix::Quadrant)),

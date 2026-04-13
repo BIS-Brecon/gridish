@@ -3,9 +3,6 @@ name = "gridish"
 version = "0.1.0"
 edition = "2024"
 
-[features]
-tetrads = []
-
 [dependencies]
 geo-types = "0.7.18"
 serde = { version = "1.0", optional = true }

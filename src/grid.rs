@@ -4,11 +4,30 @@ use crate::ParseError;
 /// Used in grid references to break up
 /// strings into 100km and 500km squares.
 /// The origin is at the bottom left square: V.
-const GRID_WIDTH: usize = 5;
+///
+/// A,B,C,D,E
+/// F,G,H,J,K
+/// L,M,N,O,P
+/// Q,R,S,T,U
+/// V,W,X,Y,Z
 pub(crate) const GRID: [char; 25] = [
     'V', 'W', 'X', 'Y', 'Z', 'Q', 'R', 'S', 'T', 'U', 'L', 'M', 'N', 'O', 'P', 'F', 'G', 'H', 'J',
     'K', 'A', 'B', 'C', 'D', 'E',
 ];
+
+/// The grid used for tetrad coordinates.
+///
+/// E,J,P,U,Z
+/// D,I,N,T,Y
+/// C,H,M,S,X
+/// B,G,L,R,W
+/// A,F,K,Q,V
+pub(crate) const TETRAD_GRID: [char; 25] = [
+    'A', 'F', 'K', 'Q', 'V', 'B', 'G', 'L', 'R', 'W', 'C', 'H', 'M', 'S', 'X', 'D', 'I', 'N', 'T',
+    'Y', 'E', 'J', 'P', 'U', 'Z',
+];
+
+const GRID_WIDTH: usize = 5;
 
 /// Returns the grid square of the given coordinates.
 /// This is zero-based and scale agnostic, so (1, 1) => R;
@@ -31,10 +50,3 @@ pub(crate) fn grid_to_coords(square: &char, grid: &[char]) -> Result<(usize, usi
 
     Ok((column, row))
 }
-
-/// The grid used for tetrad coordinates.
-#[cfg(feature = "tetrads")]
-pub(crate) const TETRAD_GRID: [char; 25] = [
-    'A', 'F', 'K', 'Q', 'V', 'B', 'G', 'L', 'R', 'W', 'C', 'H', 'M', 'S', 'X', 'D', 'I', 'N', 'T',
-    'Y', 'E', 'J', 'P', 'U', 'Z',
-];
