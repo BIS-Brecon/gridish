@@ -1,5 +1,5 @@
 use crate::data::osi_grids;
-use gridish::{Error, OSI};
+use gridish::{OSI, ParseError};
 
 #[test]
 fn parses_valid_strings() {
@@ -8,9 +8,9 @@ fn parses_valid_strings() {
     for item in data {
         let grid: OSI = item.input_string.parse().unwrap();
 
-        assert_eq!(item.eastings, grid.sw().x() as u32);
-        assert_eq!(item.northings, grid.sw().y() as u32);
-        assert_eq!(item.precision, grid.precision());
+        assert_eq!(item.eastings, grid.south_west().x() as u32);
+        assert_eq!(item.northings, grid.south_west().y() as u32);
+        assert_eq!(item.resolution, grid.resolution());
     }
 }
 
@@ -18,14 +18,12 @@ fn parses_valid_strings() {
 fn rejects_invalid_strings() {
     assert_eq!(
         "L123".parse::<OSI>(),
-        Err(Error::ParseError(
-            "3 is not a valid number of digits. Supported values: 0, 2, 4, 6, 8, 10.".to_string()
-        ))
+        Err(ParseError::InvalidString("3 is not a supported number of digits.".to_string()))
     );
 
     assert_eq!(
         "123".parse::<OSI>(),
-        Err(Error::ParseError(
+        Err(ParseError::InvalidString(
             "1 is not a valid grid square.".to_string()
         ))
     );
@@ -36,7 +34,7 @@ fn prints_correct_strings() {
     let data = osi_grids();
 
     for item in data {
-        let grid = OSI::new(item.eastings, item.northings, item.precision).unwrap();
+        let grid = OSI::new(item.eastings, item.northings, item.resolution).unwrap();
 
         assert_eq!(item.output_string, grid.to_string());
     }

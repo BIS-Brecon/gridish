@@ -3,27 +3,38 @@ use std::{fmt::Display, str::FromStr};
 use geo_types::{LineString, Point, Polygon};
 
 use crate::{
-    ParseError, constants::*, error::OutOfBoundsError, grid_reference::GridReference,
+    ParseError,
+    constants::*,
+    error::OutOfBoundsError,
+    grid::{GRID, coords_to_grid, grid_to_coords},
+    grid_reference::GridReference,
     resolution::Resolution,
 };
 
-// The bounds for eastings and northings
-const BOUNDS_EAST: u32 = _500KM;
-const BOUNDS_NORTH: u32 = _500KM;
+// The 500km grid's offset from the true origin.
+const OFFSET_EAST: u32 = _500KM * 2;
+const OFFSET_NORTH: u32 = _500KM;
 
-/// Type representing a valid Irish National Grid Reference.
+// The bounds for eastings and northings
+const BOUNDS_EAST: u32 = (_500KM * 5) - OFFSET_EAST;
+const BOUNDS_NORTH: u32 = (_500KM * 5) - OFFSET_NORTH;
+
+/// Type representing a valid British National Grid Reference.
 /// Can be instantiated either by parsing from a string or through
 /// a valid set of eastings and northings as coordinates.
 ///
 /// Provides functionality to convert between strings and coordinates,
 /// as well as re-mapping to a new precision.
-// Works as a simple wrapper around Point, with some additional methods.
+// Is primarily a wrapper over Point, but with additional logic to
+// handle 500Km squares and their false origin.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct OSI {
+pub struct OSGB {
     point: crate::grid_reference::GridReference,
+    square_500k_east: u32,
+    square_500k_north: u32,
 }
 
-impl OSI {
+impl OSGB {
     /// Creates a new grid reference from the given coordinates
     /// and precision.
     ///
@@ -32,15 +43,15 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::{OSI, Resolution};
+    /// use gridish::{OSGB, Resolution};
     ///
-    /// let gridref = OSI::new(
+    /// let gridref = OSGB::new(
     ///     389_200,
     ///     243_700,
     ///     Resolution::_100m
     /// ).unwrap();
     ///
-    /// assert_eq!(gridref.to_string(), "O892437".to_string());
+    /// assert_eq!(gridref.to_string(), "SO892437".to_string());
     /// ```
     pub fn new(
         eastings: u32,
@@ -51,18 +62,31 @@ impl OSI {
             (true, true) => Err(OutOfBoundsError::Both),
             (true, false) => Err(OutOfBoundsError::Eastings),
             (false, true) => Err(OutOfBoundsError::Northings),
-            (false, false) => Ok(Self {
-                point: GridReference::new(eastings, northings, resolution)?,
-            }),
+            (false, false) => {
+                let square_500k_east = (eastings + OFFSET_EAST) / _500KM;
+                let square_500k_north = (northings + OFFSET_NORTH) / _500KM;
+                let eastings = eastings % _500KM;
+                let northings = northings % _500KM;
+
+                Ok(Self {
+                    point: GridReference::new(eastings, northings, resolution)?,
+                    square_500k_east,
+                    square_500k_north,
+                })
+            }
         }
     }
 
     pub fn eastings(&self) -> u32 {
-        self.point.eastings()
+        let east_500k = (self.square_500k_east * _500KM) - OFFSET_EAST;
+
+        east_500k + self.point.eastings()
     }
 
     pub fn northings(&self) -> u32 {
-        self.point.northings()
+        let north_500k = (self.square_500k_north * _500KM) - OFFSET_NORTH;
+
+        north_500k + self.point.northings()
     }
 
     pub fn resolution(&self) -> Resolution {
@@ -73,18 +97,20 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::{OSI, Resolution};
+    /// use gridish::{OSGB, Resolution};
     ///
-    /// let gridref_100m: OSI = "O892437".parse().unwrap();
+    /// let gridref_100m: OSGB = "SO892437".parse().unwrap();
     /// let gridref_10k = gridref_100m.recalculate(Resolution::_10km);
     ///
-    /// assert_eq!("O84".to_string(), gridref_10k.to_string());
+    /// assert_eq!("SO84".to_string(), gridref_10k.to_string());
     /// ```
     pub fn recalculate(&self, resolution: Resolution) -> Self {
         if resolution.metres() <= self.point.resolution().metres() {
             self.clone()
         } else {
             Self {
+                square_500k_east: self.square_500k_east,
+                square_500k_north: self.square_500k_north,
                 point: self.point.recalculate(resolution),
             }
         }
@@ -94,10 +120,10 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::OSI;
+    /// use gridish::OSGB;
     /// use geo_types::coord;
     ///
-    /// let gridref: OSI = "O892437".parse().unwrap();
+    /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
     /// assert_eq!(gridref.south_west(), coord! {x: 389_200.0, y: 243_700.0 }.into());
     /// ```
@@ -109,10 +135,10 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::OSI;
+    /// use gridish::OSGB;
     /// use geo_types::coord;
     ///
-    /// let gridref: OSI = "O892437".parse().unwrap();
+    /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
     /// assert_eq!(gridref.north_west(), coord! {x: 389_200.0, y: 243_800.0 }.into());
     /// ```
@@ -127,10 +153,10 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::OSI;
+    /// use gridish::OSGB;
     /// use geo_types::coord;
     ///
-    /// let gridref: OSI = "O892437".parse().unwrap();
+    /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
     /// assert_eq!(gridref.north_east(), coord! {x: 389_300.0, y: 243_800.0 }.into());
     /// ```
@@ -145,10 +171,10 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::OSI;
+    /// use gridish::OSGB;
     /// use geo_types::coord;
     ///
-    /// let gridref: OSI = "O892437".parse().unwrap();
+    /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
     /// assert_eq!(gridref.south_east(), coord! {x: 389_300.0, y: 243_700.0 }.into());
     /// ```
@@ -163,10 +189,10 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::OSI;
+    /// use gridish::OSGB;
     /// use geo_types::coord;
     ///
-    /// let gridref: OSI = "O892437".parse().unwrap();
+    /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
     /// assert_eq!(gridref.centre(), coord! {x: 389_250.0, y: 243_750.0 }.into());
     /// ```
@@ -181,10 +207,10 @@ impl OSI {
     ///
     /// # Example
     /// ```
-    /// use gridish::OSI;
+    /// use gridish::OSGB;
     /// use geo_types::{LineString, Point, Polygon};
     ///
-    /// let gridref: OSI = "O892437".parse().unwrap();
+    /// let gridref: OSGB = "SO892437".parse().unwrap();
     ///
     /// assert_eq!(
     ///     gridref.perimeter(),
@@ -214,29 +240,51 @@ impl OSI {
     }
 }
 
-impl FromStr for OSI {
+impl FromStr for OSGB {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let point = GridReference::from_string_rep(s)?;
-
-        Ok(Self { point })
+        match s.chars().next() {
+            Some(c) => {
+                let (east, north) = grid_to_coords(&c, &GRID)?;
+                match (
+                    (east as u32 * _500KM) < OFFSET_EAST,
+                    (north as u32 * _500KM) < OFFSET_NORTH,
+                ) {
+                    (true, true) => Err(ParseError::OutOfBounds(OutOfBoundsError::Both)),
+                    (true, false) => Err(ParseError::OutOfBounds(OutOfBoundsError::Eastings)),
+                    (false, true) => Err(ParseError::OutOfBounds(OutOfBoundsError::Northings)),
+                    (false, false) => Ok(Self {
+                        point: GridReference::from_string_rep(&s[1..])?,
+                        square_500k_east: east as u32,
+                        square_500k_north: north as u32,
+                    }),
+                }
+            }
+            None => Err(ParseError::InvalidString("Found empty string".to_string())),
+        }
     }
 }
 
-impl Display for OSI {
+impl Display for OSGB {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.point.to_string_rep())
+        let square = coords_to_grid(
+            self.square_500k_east as usize,
+            self.square_500k_north as usize,
+            &GRID,
+        );
+
+        write!(f, "{}{}", square, self.point.to_string_rep())
     }
 }
 
 #[cfg(feature = "serde")]
 mod serde {
-    use crate::OSI;
+    use crate::OSGB;
     use serde::{de, ser};
     use std::fmt;
 
-    impl ser::Serialize for OSI {
+    impl ser::Serialize for OSGB {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
             S: ser::Serializer,
@@ -245,10 +293,10 @@ mod serde {
         }
     }
 
-    struct OSIVisitor;
+    struct OSGBVisitor;
 
-    impl<'de> de::Visitor<'de> for OSIVisitor {
-        type Value = OSI;
+    impl<'de> de::Visitor<'de> for OSGBVisitor {
+        type Value = OSGB;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a formatted grid ref string")
@@ -262,12 +310,12 @@ mod serde {
         }
     }
 
-    impl<'de> de::Deserialize<'de> for OSI {
+    impl<'de> de::Deserialize<'de> for OSGB {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: de::Deserializer<'de>,
         {
-            deserializer.deserialize_str(OSIVisitor)
+            deserializer.deserialize_str(OSGBVisitor)
         }
     }
 }
@@ -279,27 +327,27 @@ mod tests {
     #[test]
     fn points_print() {
         let tests = vec![
-            (Resolution::_100km, "O"),
+            (Resolution::_100km, "TL"),
             #[cfg(feature = "quadrants")]
-            (Resolution::_50km, "OSW"),
-            (Resolution::_10km, "O13"),
+            (Resolution::_50km, "TLSW"),
+            (Resolution::_10km, "TL03"),
             #[cfg(feature = "quadrants")]
-            (Resolution::_5km, "O13SE"),
+            (Resolution::_5km, "TL03NW"),
             #[cfg(feature = "tetrads")]
-            (Resolution::_2km, "O13M"),
-            (Resolution::_1km, "O1534"),
+            (Resolution::_2km, "TL03P"),
+            (Resolution::_1km, "TL0438"),
             #[cfg(feature = "quadrants")]
-            (Resolution::_500m, "O1534NE"),
-            (Resolution::_100m, "O159346"),
+            (Resolution::_500m, "TL0438SE"),
+            (Resolution::_100m, "TL048380"),
             #[cfg(feature = "quadrants")]
-            (Resolution::_50m, "O159346NW"),
-            (Resolution::_10m, "O15903467"),
+            (Resolution::_50m, "TL048380SE"),
+            (Resolution::_10m, "TL04863802"),
             #[cfg(feature = "quadrants")]
-            (Resolution::_5m, "O15903467SW"),
-            (Resolution::_1m, "O1590434671"),
+            (Resolution::_5m, "TL04863802SE"),
+            (Resolution::_1m, "TL0486638023"),
         ];
         for test in tests {
-            let point = OSI::new(315904, 234671, test.0).unwrap();
+            let point = OSGB::new(504866, 238023, test.0).unwrap();
 
             assert_eq!(&point.to_string(), test.1);
         }
@@ -308,29 +356,29 @@ mod tests {
     #[test]
     fn strings_parse() {
         let tests = vec![
-            ("O", (Resolution::_100km, 300000, 200000)),
+            ("TL", (Resolution::_100km, 500000, 200000)),
             #[cfg(feature = "quadrants")]
-            ("OSW", (Resolution::_50km, 300000, 200000)),
-            ("O13", (Resolution::_10km, 310000, 230000)),
+            ("TLSW", (Resolution::_50km, 500000, 200000)),
+            ("TL03", (Resolution::_10km, 500000, 230000)),
             #[cfg(feature = "quadrants")]
-            ("O13SE", (Resolution::_5km, 315000, 230000)),
+            ("TL03NW", (Resolution::_5km, 500000, 235000)),
             #[cfg(feature = "tetrads")]
-            ("O13M", (Resolution::_2km, 314000, 234000)),
-            ("O1534", (Resolution::_1km, 315000, 234000)),
+            ("TL03P", (Resolution::_2km, 504000, 238000)),
+            ("TL0438", (Resolution::_1km, 504000, 238000)),
             #[cfg(feature = "quadrants")]
-            ("O1534NE", (Resolution::_500m, 315500, 234500)),
-            ("O159346", (Resolution::_100m, 315900, 234600)),
+            ("TL0438SE", (Resolution::_500m, 504500, 238000)),
+            ("TL048380", (Resolution::_100m, 504800, 238000)),
             #[cfg(feature = "quadrants")]
-            ("O159346NW", (Resolution::_50m, 315900, 234650)),
-            ("O15903467", (Resolution::_10m, 315900, 234670)),
+            ("TL048380SE", (Resolution::_50m, 504850, 238000)),
+            ("TL04863802", (Resolution::_10m, 504860, 238020)),
             #[cfg(feature = "quadrants")]
-            ("O15903467SW", (Resolution::_5m, 315900, 234670)),
-            ("O1590434671", (Resolution::_1m, 315904, 234671)),
+            ("TL04863802SE", (Resolution::_5m, 504865, 238020)),
+            ("TL0486638023", (Resolution::_1m, 504866, 238023)),
         ];
 
         for test in tests {
             println!("Testing string: {}", test.0);
-            let point = OSI::from_str(test.0).unwrap();
+            let point = OSGB::from_str(test.0).unwrap();
 
             assert_eq!(point.resolution(), test.1.0);
             assert_eq!(point.eastings(), test.1.1);
@@ -340,26 +388,26 @@ mod tests {
 
     #[test]
     fn points_recalculate() {
-        let point = OSI::new(315904, 234671, Resolution::_1m).unwrap();
+        let point = OSGB::new(504866, 238023, Resolution::_1m).unwrap();
         let tests = vec![
-            (Resolution::_100km, (300000, 200000)),
+            (Resolution::_100km, (500000, 200000)),
             #[cfg(feature = "quadrants")]
-            (Resolution::_50km, (300000, 200000)),
-            (Resolution::_10km, (310000, 230000)),
+            (Resolution::_50km, (500000, 200000)),
+            (Resolution::_10km, (500000, 230000)),
             #[cfg(feature = "quadrants")]
-            (Resolution::_5km, (315000, 230000)),
+            (Resolution::_5km, (500000, 235000)),
             #[cfg(feature = "tetrads")]
-            (Resolution::_2km, (314000, 234000)),
-            (Resolution::_1km, (315000, 234000)),
+            (Resolution::_2km, (504000, 238000)),
+            (Resolution::_1km, (504000, 238000)),
             #[cfg(feature = "quadrants")]
-            (Resolution::_500m, (315500, 234500)),
-            (Resolution::_100m, (315900, 234600)),
+            (Resolution::_500m, (504500, 238000)),
+            (Resolution::_100m, (504800, 238000)),
             #[cfg(feature = "quadrants")]
-            (Resolution::_50m, (315900, 234650)),
-            (Resolution::_10m, (315900, 234670)),
+            (Resolution::_50m, (504850, 238000)),
+            (Resolution::_10m, (504860, 238020)),
             #[cfg(feature = "quadrants")]
-            (Resolution::_5m, (315900, 234670)),
-            (Resolution::_1m, (315904, 234671)),
+            (Resolution::_5m, (504865, 238020)),
+            (Resolution::_1m, (504866, 238023)),
         ];
 
         for test in tests {
@@ -391,7 +439,7 @@ mod tests {
         ];
 
         for test in tests {
-            let point = OSI::new(315904, 234671, test).unwrap();
+            let point = OSGB::new(504866, 238023, test).unwrap();
 
             assert_eq!(
                 point.recalculate(Resolution::_1m).resolution(),
@@ -399,42 +447,42 @@ mod tests {
             );
         }
     }
-}
 
-#[test]
-#[cfg(not(feature = "tetrads"))]
-fn tetrads_are_rejected_when_not_enabled() {
-    cfg_select! {
-        feature = "quadrants" => {
-            assert_eq!(
-                OSI::from_str("L03P"),
-                Err(ParseError::InvalidString("P is not a valid quadrant.".to_string()))
-            );
-        }
-        _ => {
-            assert_eq!(
-                OSI::from_str("L03P"),
-                Err(ParseError::InvalidString("Extra characters found after digits.".to_string()))
-            );
+    #[test]
+    #[cfg(not(feature = "tetrads"))]
+    fn tetrads_are_rejected_when_not_enabled() {
+        cfg_select! {
+            feature = "quadrants" => {
+                assert_eq!(
+                    OSGB::from_str("TL03P"),
+                    Err(ParseError::InvalidString("P is not a valid quadrant.".to_string()))
+                );
+            }
+            _ => {
+                assert_eq!(
+                    OSGB::from_str("TL03P"),
+                    Err(ParseError::InvalidString("Extra characters found after digits.".to_string()))
+                );
+            }
         }
     }
-}
 
-#[test]
-#[cfg(not(feature = "quadrants"))]
-fn quadrants_are_rejected_when_not_enabled() {
-    cfg_select! {
-        feature = "tetrads" => {
-            assert_eq!(
-                OSI::from_str("L03SW"),
-                Err(ParseError::InvalidString("SW is not a valid tetrad.".to_string()))
-            );
-        }
-        _ => {
-            assert_eq!(
-                OSI::from_str("L03SW"),
-                Err(ParseError::InvalidString("Extra characters found after digits.".to_string()))
-            );
+    #[test]
+    #[cfg(not(feature = "quadrants"))]
+    fn quadrants_are_rejected_when_not_enabled() {
+        cfg_select! {
+            feature = "tetrads" => {
+                assert_eq!(
+                    OSGB::from_str("TL03SW"),
+                    Err(ParseError::InvalidString("SW is not a valid tetrad.".to_string()))
+                );
+            }
+            _ => {
+                assert_eq!(
+                    OSGB::from_str("TL03SW"),
+                    Err(ParseError::InvalidString("Extra characters found after digits.".to_string()))
+                );
+            }
         }
     }
 }
