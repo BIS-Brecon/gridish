@@ -16,11 +16,24 @@ fn parses_valid_strings() {
 
 #[test]
 fn rejects_invalid_strings() {
-    assert_eq!("TL123".parse::<OSGB>(), Err(ParseError::InvalidResolution));
+    assert_eq!(
+        "TL123".parse::<OSGB>(),
+        Err(ParseError::InvalidString("3 is not a supported number of digits.".to_string()))
+    );
 
-    assert_eq!("123".parse::<OSGB>(), Err(ParseError::InvalidSquare('1')));
+    assert_eq!(
+        "123".parse::<OSGB>(),
+        Err(ParseError::InvalidString(
+            "1 is not a valid grid square.".to_string()
+        ))
+    );
 
-    assert_eq!("T45".parse::<OSGB>(), Err(ParseError::InvalidSquare('4')));
+    assert_eq!(
+        "T45".parse::<OSGB>(),
+        Err(ParseError::InvalidString(
+            "4 is not a valid grid square.".to_string()
+        ))
+    );
 }
 
 #[test]

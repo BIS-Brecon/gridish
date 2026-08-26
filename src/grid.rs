@@ -22,6 +22,7 @@ pub(crate) const GRID: [char; 25] = [
 /// C,H,M,S,X
 /// B,G,L,R,W
 /// A,F,K,Q,V
+#[cfg(feature = "tetrads")]
 pub(crate) const TETRAD_GRID: [char; 25] = [
     'A', 'F', 'K', 'Q', 'V', 'B', 'G', 'L', 'R', 'W', 'C', 'H', 'M', 'S', 'X', 'D', 'I', 'N', 'T',
     'Y', 'E', 'J', 'P', 'U', 'Z',
@@ -43,7 +44,7 @@ pub(crate) fn grid_to_coords(square: &char, grid: &[char]) -> Result<(usize, usi
     let index = grid
         .iter()
         .position(|x| x.eq_ignore_ascii_case(square))
-        .ok_or_else(|| ParseError::InvalidSquare(*square))?;
+        .ok_or_else(|| ParseError::InvalidString(format!("{square} is not a valid grid square.")))?;
 
     let column = index % GRID_WIDTH;
     let row = index / GRID_WIDTH;

@@ -3,9 +3,12 @@ use crate::{
     constants::*,
     error::OutOfBoundsError,
     grid::{GRID, coords_to_grid, grid_to_coords},
-    resolution::{Resolution, Suffix},
+    resolution::Resolution,
     utils::{pad, round_down},
 };
+
+#[cfg(any(feature = "tetrads", feature = "quadrants"))]
+use crate::resolution::Suffix;
 
 /// The core of the British and Irish national grids.
 /// A coordinate point that can represent any location
@@ -72,7 +75,14 @@ impl GridReference {
     /// Converts a Grid Reference to its String Representation.
     pub(crate) fn to_string_rep(&self) -> String {
         // Determine string representation
-        let (res, digits, suffix) = self.resolution().representation();
+        cfg_select! {
+            any(feature = "tetrads", feature = "quadrants") => {
+                let (res, digits, suffix) = self.resolution().representation();
+            }
+            _ => {
+                let (res, digits) = self.resolution().representation();
+            }
+        }
 
         // Setup working eastings and northings
         let (mut east, mut north) = (self.eastings, self.northings);
@@ -86,34 +96,43 @@ impl GridReference {
         let east_digits = pad(east / res, digits as usize / 2);
         let north_digits = pad(north / res, digits as usize / 2);
 
-        // Suffix
-        let suffix = if let Some(s) = suffix {
-            east = east % res;
-            north = north % res;
+        cfg_select! {
+            any(feature = "tetrads", feature = "quadrants") => {
+                // Suffix
+                let suffix = if let Some(s) = suffix {
+                    east = east % res;
+                    north = north % res;
 
-            match s {
-                Suffix::Quadrant => {
-                    let half = res / 2;
+                    match s {
+                        #[cfg(feature = "quadrants")]
+                        Suffix::Quadrant => {
+                            let half = res / 2;
 
-                    match (east >= half, north >= half) {
-                        (true, true) => "NE",
-                        (true, false) => "SE",
-                        (false, true) => "NW",
-                        (false, false) => "SW",
+                            match (east >= half, north >= half) {
+                                (true, true) => "NE",
+                                (true, false) => "SE",
+                                (false, true) => "NW",
+                                (false, false) => "SW",
+                            }
+                        }
+                        #[cfg(feature = "tetrads")]
+                        Suffix::Tetrad => &coords_to_grid(
+                            (east / self.resolution().metres()) as usize,
+                            (north / self.resolution().metres()) as usize,
+                            &crate::grid::TETRAD_GRID,
+                        )
+                        .to_string(),
                     }
-                }
-                Suffix::Tetrad => &coords_to_grid(
-                    (east / self.resolution().metres()) as usize,
-                    (north / self.resolution().metres()) as usize,
-                    &crate::grid::TETRAD_GRID,
-                )
-                .to_string(),
-            }
-        } else {
-            ""
-        };
+                } else {
+                    ""
+                };
 
-        format!("{square}{east_digits}{north_digits}{suffix}")
+                format!("{square}{east_digits}{north_digits}{suffix}")
+            }
+            _ => {
+                format!("{square}{east_digits}{north_digits}")
+            }
+        }
     }
 
     /// Create a Grid Reference from its String representation.,
@@ -124,7 +143,9 @@ impl GridReference {
         let mut north = 0;
 
         // Parse square
-        let square = chars.next().ok_or(ParseError::InvalidSquare(' '))?;
+        let square = chars
+            .next()
+            .ok_or(ParseError::InvalidString("Empty string".to_string()))?;
         let (e, n) = grid_to_coords(&square, &GRID)?;
         east += e as u32 * res;
         north += n as u32 * res;
@@ -148,7 +169,12 @@ impl GridReference {
                 (3, 3) => _100M,
                 (4, 4) => _10M,
                 (5, 5) => _1M,
-                _ => return Err(ParseError::InvalidResolution),
+                _ => {
+                    return Err(ParseError::InvalidString(format!(
+                        "{} is not a supported number of digits.",
+                        eastings.len() + northings.len()
+                    )));
+                }
             };
 
             east += eastings.parse::<u32>()? * res;
@@ -159,57 +185,88 @@ impl GridReference {
         }
 
         // Parse suffix if found
+        #[allow(unused_variables)]
         if let Some(start) = s[pos..].find(|c: char| c.is_alphabetic()) {
-            // Correct start position
-            let start = pos + start;
-            let suffix = &s[start..s.len()].trim();
+            cfg_select! {
+                any(feature = "tetrads", feature = "quadrants") => {
+                    // Correct start position
+                    let start = pos + start;
+                    let suffix = &s[start..s.len()].trim();
+                    #[allow(unused_mut)]
+                    let mut matched_suffix = false;
 
-            // Tetrad
-            if suffix.len() == 1 {
-                if res == _10KM {
-                    res = res / 5;
-                    let (e, n) = grid_to_coords(
-                        &suffix.chars().next().expect("String should not be empty"),
-                        &crate::grid::TETRAD_GRID,
-                    )?;
-                    east += e as u32 * res;
-                    north += n as u32 * res;
-                } else {
-                    return Err(ParseError::InvalidString(
-                        "Tetrads are only supported for 2 figure grid references".to_string(),
-                    ));
-                }
-            } else {
-                res = res / 2;
-                let (e, n) = match *suffix {
-                    "NW" => (0, res),
-                    "NE" => (res, res),
-                    "SE" => (res, 0),
-                    "SW" => (0, 0),
-                    _ => {
-                        return Err(ParseError::InvalidQuadrant(suffix.to_string()));
+                    // Tetrad
+                    #[cfg(feature = "tetrads")]
+                    if suffix.len() == 1 {
+                        if res == _10KM {
+                            res = res / 5;
+                            let (e, n) = grid_to_coords(
+                                &suffix.chars().next().expect("String should not be empty"),
+                                &crate::grid::TETRAD_GRID,
+                            )?;
+                            east += e as u32 * res;
+                            north += n as u32 * res;
+                            matched_suffix = true;
+                        } else {
+                            return Err(ParseError::InvalidString(
+                                "Tetrads are only supported for 2 figure grid references.".to_string(),
+                            ));
+                        }
                     }
-                };
 
-                east += e;
-                north += n;
+                    if !matched_suffix {
+                        cfg_select! {
+                            feature = "quadrants" => {
+                                res = res / 2;
+                                let (e, n) = match *suffix {
+                                    "NW" => (0, res),
+                                    "NE" => (res, res),
+                                    "SE" => (res, 0),
+                                    "SW" => (0, 0),
+                                    _ => {
+                                        return Err(ParseError::InvalidString(format!("{suffix} is not a valid quadrant.")));
+                                    }
+                                };
+
+                                east += e;
+                                north += n;
+                            }
+                            feature = "tetrads" => {
+                                return Err(ParseError::InvalidString(format!("{suffix} is not a valid tetrad.")));
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    return Err(ParseError::InvalidString("Extra characters found after digits.".to_string()));
+                }
             }
         }
 
         let resolution = match res {
             _100KM => Resolution::_100km,
+            #[cfg(feature = "quadrants")]
             _50KM => Resolution::_50km,
             _10KM => Resolution::_10km,
+            #[cfg(feature = "quadrants")]
             _5KM => Resolution::_5km,
+            #[cfg(feature = "tetrads")]
             _2KM => Resolution::_2km,
             _1KM => Resolution::_1km,
+            #[cfg(feature = "quadrants")]
             _500M => Resolution::_500m,
             _100M => Resolution::_100m,
+            #[cfg(feature = "quadrants")]
             _50M => Resolution::_50m,
             _10M => Resolution::_10m,
+            #[cfg(feature = "quadrants")]
             _5M => Resolution::_5m,
             _1M => Resolution::_1m,
-            _ => return Err(ParseError::InvalidResolution),
+            _ => {
+                return Err(ParseError::InvalidString(format!(
+                    "{res} is not a supported resolution."
+                )));
+            }
         };
 
         Ok(Self::new(east, north, resolution)?)

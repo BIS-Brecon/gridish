@@ -328,15 +328,21 @@ mod tests {
     fn points_print() {
         let tests = vec![
             (Resolution::_100km, "TL"),
+            #[cfg(feature = "quadrants")]
             (Resolution::_50km, "TLSW"),
             (Resolution::_10km, "TL03"),
+            #[cfg(feature = "quadrants")]
             (Resolution::_5km, "TL03NW"),
+            #[cfg(feature = "tetrads")]
             (Resolution::_2km, "TL03P"),
             (Resolution::_1km, "TL0438"),
+            #[cfg(feature = "quadrants")]
             (Resolution::_500m, "TL0438SE"),
             (Resolution::_100m, "TL048380"),
+            #[cfg(feature = "quadrants")]
             (Resolution::_50m, "TL048380SE"),
             (Resolution::_10m, "TL04863802"),
+            #[cfg(feature = "quadrants")]
             (Resolution::_5m, "TL04863802SE"),
             (Resolution::_1m, "TL0486638023"),
         ];
@@ -351,15 +357,21 @@ mod tests {
     fn strings_parse() {
         let tests = vec![
             ("TL", (Resolution::_100km, 500000, 200000)),
+            #[cfg(feature = "quadrants")]
             ("TLSW", (Resolution::_50km, 500000, 200000)),
             ("TL03", (Resolution::_10km, 500000, 230000)),
+            #[cfg(feature = "quadrants")]
             ("TL03NW", (Resolution::_5km, 500000, 235000)),
+            #[cfg(feature = "tetrads")]
             ("TL03P", (Resolution::_2km, 504000, 238000)),
             ("TL0438", (Resolution::_1km, 504000, 238000)),
+            #[cfg(feature = "quadrants")]
             ("TL0438SE", (Resolution::_500m, 504500, 238000)),
             ("TL048380", (Resolution::_100m, 504800, 238000)),
+            #[cfg(feature = "quadrants")]
             ("TL048380SE", (Resolution::_50m, 504850, 238000)),
             ("TL04863802", (Resolution::_10m, 504860, 238020)),
+            #[cfg(feature = "quadrants")]
             ("TL04863802SE", (Resolution::_5m, 504865, 238020)),
             ("TL0486638023", (Resolution::_1m, 504866, 238023)),
         ];
@@ -379,15 +391,21 @@ mod tests {
         let point = OSGB::new(504866, 238023, Resolution::_1m).unwrap();
         let tests = vec![
             (Resolution::_100km, (500000, 200000)),
+            #[cfg(feature = "quadrants")]
             (Resolution::_50km, (500000, 200000)),
             (Resolution::_10km, (500000, 230000)),
+            #[cfg(feature = "quadrants")]
             (Resolution::_5km, (500000, 235000)),
+            #[cfg(feature = "tetrads")]
             (Resolution::_2km, (504000, 238000)),
             (Resolution::_1km, (504000, 238000)),
+            #[cfg(feature = "quadrants")]
             (Resolution::_500m, (504500, 238000)),
             (Resolution::_100m, (504800, 238000)),
+            #[cfg(feature = "quadrants")]
             (Resolution::_50m, (504850, 238000)),
             (Resolution::_10m, (504860, 238020)),
+            #[cfg(feature = "quadrants")]
             (Resolution::_5m, (504865, 238020)),
             (Resolution::_1m, (504866, 238023)),
         ];
@@ -402,15 +420,21 @@ mod tests {
     fn recalculate_does_not_increase_resolution() {
         let tests = vec![
             Resolution::_100km,
+            #[cfg(feature = "quadrants")]
             Resolution::_50km,
             Resolution::_10km,
+            #[cfg(feature = "quadrants")]
             Resolution::_5km,
+            #[cfg(feature = "tetrads")]
             Resolution::_2km,
             Resolution::_1km,
+            #[cfg(feature = "quadrants")]
             Resolution::_500m,
             Resolution::_100m,
+            #[cfg(feature = "quadrants")]
             Resolution::_50m,
             Resolution::_10m,
+            #[cfg(feature = "quadrants")]
             Resolution::_5m,
         ];
 
@@ -421,6 +445,44 @@ mod tests {
                 point.recalculate(Resolution::_1m).resolution(),
                 point.resolution()
             );
+        }
+    }
+
+    #[test]
+    #[cfg(not(feature = "tetrads"))]
+    fn tetrads_are_rejected_when_not_enabled() {
+        cfg_select! {
+            feature = "quadrants" => {
+                assert_eq!(
+                    OSGB::from_str("TL03P"),
+                    Err(ParseError::InvalidString("P is not a valid quadrant.".to_string()))
+                );
+            }
+            _ => {
+                assert_eq!(
+                    OSGB::from_str("TL03P"),
+                    Err(ParseError::InvalidString("Extra characters found after digits.".to_string()))
+                );
+            }
+        }
+    }
+
+    #[test]
+    #[cfg(not(feature = "quadrants"))]
+    fn quadrants_are_rejected_when_not_enabled() {
+        cfg_select! {
+            feature = "tetrads" => {
+                assert_eq!(
+                    OSGB::from_str("TL03SW"),
+                    Err(ParseError::InvalidString("SW is not a valid tetrad.".to_string()))
+                );
+            }
+            _ => {
+                assert_eq!(
+                    OSGB::from_str("TL03SW"),
+                    Err(ParseError::InvalidString("Extra characters found after digits.".to_string()))
+                );
+            }
         }
     }
 }

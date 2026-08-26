@@ -18,12 +18,6 @@ pub enum ParseError {
     OutOfBounds(#[from] OutOfBoundsError),
     #[error(transparent)]
     ParseInt(#[from] ParseIntError),
-    #[error("Invalid resolution")]
-    InvalidResolution,
-    #[error("{0} is not a valid grid square")]
-    InvalidSquare(char),
-    #[error("{0} is not a valid quadrant")]
-    InvalidQuadrant(String),
     #[error("{0}")]
     InvalidString(String),
 }
